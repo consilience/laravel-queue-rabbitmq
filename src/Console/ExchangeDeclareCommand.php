@@ -13,7 +13,8 @@ class ExchangeDeclareCommand extends Command
                             {connection=rabbitmq : The name of the queue connection to use}
                             {--type=direct}
                             {--durable=1}
-                            {--auto-delete=0}';
+                            {--auto-delete=0}
+                            {--option=* : List of option-name|option-value[|option-type]}';
 
     protected $description = 'Declare exchange';
 
@@ -33,11 +34,28 @@ class ExchangeDeclareCommand extends Command
             return;
         }
 
+        $options = collect($this->option('option'))->mapWithKeys(function ($item) {
+            [$name, $value, $type] = explode('|', $item, 3) + [null, null, null];
+
+            switch ((string)$type) {
+                case 'int':
+                case 'integer':
+                    $value = (int)$value;
+                    break;
+            }
+
+            return [$name => $value];
+        })->filter(function($value, $key) {
+            // Filter out empty "--option="
+            return $key !== '';
+        })->toArray();
+
         $queue->declareExchange(
             $this->argument('name'),
             $this->option('type'),
             (bool) $this->option('durable'),
-            (bool) $this->option('auto-delete')
+            (bool) $this->option('auto-delete'),
+            $options
         );
 
         $this->info('Exchange declared successfully.');

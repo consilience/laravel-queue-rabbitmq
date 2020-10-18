@@ -14,7 +14,7 @@ class ExchangeDeclareCommand extends Command
                             {--type=direct}
                             {--durable=1}
                             {--auto-delete=0}
-                            {--option=* : List of option-name|option-value[|option-type]}';
+                            {--option=* : List of options name[|value[|type]]}';
 
     protected $description = 'Declare exchange';
 
@@ -37,11 +37,17 @@ class ExchangeDeclareCommand extends Command
         $options = collect($this->option('option'))->mapWithKeys(function ($item) {
             [$name, $value, $type] = explode('|', $item, 3) + [null, null, null];
 
-            switch ((string)$type) {
-                case 'int':
-                case 'integer':
-                    $value = (int)$value;
-                    break;
+            if ($type) {
+                switch ($type) {
+                    case 'int':
+                    case 'integer':
+                        $value = (int)$value;
+                        break;
+                    case 'bool':
+                    case 'boolean':
+                        $value = (bool)$value;
+                        break;
+                    }
             }
 
             return [$name => $value];
